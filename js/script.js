@@ -127,50 +127,74 @@ let sliderImages = [];
 function showProjectImages(images) {
   sliderImages = images;
   currentSlide = 0;
-  const modal = document.getElementById("projectModal");
-  const modalImages = document.getElementById("modalImages");
   renderSliderImages();
+  const modal = document.getElementById("projectModal");
   modal.style.display = "flex";
+  modal.classList.add("show");
 }
 function renderSliderImages() {
   const modalImages = document.getElementById("modalImages");
-  let visibleImages = sliderImages.slice(currentSlide, currentSlide + 3);
+  const activeImage = sliderImages[currentSlide] || "";
   modalImages.innerHTML = `
-    <div style="margin-top:12px; display:flex; align-items:center; justify-content:center; gap:10px; width:100%; max-width:800px; margin: 0 auto;">
-      <button id="nextSlide" ${
-        currentSlide + 3 >= sliderImages.length ? "disabled" : ""
-      }>
-        <i class="fas fa-arrow-left"></i>
+    <div class="slider-container">
+      <button id="prevSlide" ${currentSlide === 0 ? "disabled" : ""} aria-label="Previous image">
+        <i class="fas fa-chevron-left"></i>
       </button>
-      <div style="display: flex; gap: 10px; justify-content: center; align-items: center; flex: 1;">
-        ${visibleImages
-          .map(
-            (src) =>
-              `<img src="${src}" style="max-height: 160px; max-width: 160px; object-fit: cover; border-radius: 10px;" />`
-          )
-          .join("")}
-      </div>
-      <button id="prevSlide" ${
-        currentSlide === 0 ? "disabled" : ""
-      }>
-        <i class="fas fa-arrow-right"></i>
+      <img src="${activeImage}" alt="Project screenshot" class="slider-image" />
+      <button id="nextSlide" ${currentSlide === sliderImages.length - 1 ? "disabled" : ""} aria-label="Next image">
+        <i class="fas fa-chevron-right"></i>
       </button>
     </div>
+    <div class="thumbnail-row">
+      ${sliderImages
+        .map(
+          (src, index) =>
+            `<img src="${src}" alt="Thumbnail ${index + 1}" class="${
+              index === currentSlide ? "active" : ""
+            }" data-index="${index}" />`
+        )
+        .join("")}
+    </div>
   `;
+
   document.getElementById("prevSlide")?.addEventListener("click", function () {
     if (currentSlide > 0) {
       currentSlide--;
       renderSliderImages();
     }
   });
+
   document.getElementById("nextSlide")?.addEventListener("click", function () {
-    if (currentSlide + 3 < sliderImages.length) {
+    if (currentSlide < sliderImages.length - 1) {
       currentSlide++;
       renderSliderImages();
     }
+  });
+
+  modalImages.querySelectorAll(".thumbnail-row img").forEach((thumb) => {
+    thumb.addEventListener("click", () => {
+      const index = Number(thumb.dataset.index);
+      if (!Number.isNaN(index)) {
+        currentSlide = index;
+        renderSliderImages();
+      }
+    });
   });
 }
 document.getElementById("closeModal").onclick = function () {
   document.getElementById("projectModal").style.display = "none";
 };
+
+const projectModal = document.getElementById("projectModal");
+projectModal?.addEventListener("click", (event) => {
+  if (event.target === projectModal) {
+    projectModal.style.display = "none";
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    projectModal?.style.display === "flex" && (projectModal.style.display = "none");
+  }
+});
 // ... existing code ...
