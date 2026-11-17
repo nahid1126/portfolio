@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
   // Create particles for hero section
   const heroParticles = document.getElementById("hero-particles");
+  const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
   if (heroParticles) {
     createHeroParticles(heroParticles);
   }
@@ -15,13 +16,13 @@ document.addEventListener("DOMContentLoaded", function () {
     container.appendChild(canvas);
 
     const ctx = canvas.getContext("2d");
+    if (!ctx) return;
     canvas.width = container.offsetWidth;
     canvas.height = container.offsetHeight;
 
     // Particles configuration
     const particles = [];
-    const particleCount = 620;
-    // const colors = ["rgba(255, 255, 255, 0.6)", "rgba(100, 200, 255, 0.6)"];
+    const particleCount = Math.min(55, Math.max(20, Math.round(canvas.width / 24)));
     const colors = ['rgba(255,255,255,0.8)', 'rgba(100,200,255,0.8)', 'rgba(200,200,255,0.8)'];
 
     // Create particles
@@ -45,8 +46,14 @@ document.addEventListener("DOMContentLoaded", function () {
       mouse.y = event.clientY - rect.top;
     });
 
+    window.addEventListener("mouseleave", () => { mouse.x = null; mouse.y = null; });
+
     // Animation loop
+    let frame = null;
+    let inView = true;
     function animate() {
+      frame = null;
+      if (motion.matches || document.hidden || !inView) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Update and draw particles
@@ -54,8 +61,8 @@ document.addEventListener("DOMContentLoaded", function () {
         const p = particles[i];
 
         // Mouse repulse effect
-        const dx = mouse.x - p.x;
-        const dy = mouse.y - p.y;
+        const dx = mouse.x === null ? Infinity : mouse.x - p.x;
+        const dy = mouse.y === null ? Infinity : mouse.y - p.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < mouse.radius) {
@@ -89,8 +96,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
           if (dist < 90) {
             ctx.beginPath();
-            // ctx.strokeStyle = `rgba(100, 200, 255, ${0.4 - dist / 250})`;
-            ctx.strokeStyle = `rgba(200, 300, 385, ${0.4 - dist / 350})`;
+            ctx.strokeStyle = `rgba(200, 230, 255, ${0.4 - dist / 350})`;
             ctx.lineWidth = 0.5;
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
@@ -99,15 +105,33 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
 
-      requestAnimationFrame(animate);
+      frame = requestAnimationFrame(animate);
     }
 
     // Handle window resize
     window.addEventListener("resize", function () {
       canvas.width = container.offsetWidth;
       canvas.height = container.offsetHeight;
+      particles.forEach((particle) => {
+        particle.x = Math.min(Math.max(particle.x, 1), canvas.width - 1);
+        particle.y = Math.min(Math.max(particle.y, 1), canvas.height - 1);
+      });
     });
 
-    animate();
+    function syncAnimation() {
+      if (frame !== null) cancelAnimationFrame(frame);
+      frame = null;
+      if (motion.matches) ctx.clearRect(0, 0, canvas.width, canvas.height);
+      else if (!document.hidden && inView) frame = requestAnimationFrame(animate);
+    }
+    document.addEventListener("visibilitychange", syncAnimation);
+    motion.addEventListener("change", syncAnimation);
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(([entry]) => {
+        inView = entry.isIntersecting;
+        syncAnimation();
+      }).observe(container);
+    }
+    syncAnimation();
   }
 });

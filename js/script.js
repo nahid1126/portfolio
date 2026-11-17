@@ -1,200 +1,188 @@
-document.addEventListener("DOMContentLoaded", function () {
-  // Scroll animation
-  const observer = new IntersectionObserver(
-    (entries) => {
+document.addEventListener("DOMContentLoaded", () => {
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const animated = document.querySelectorAll(".animate-on-scroll");
+  if ("IntersectionObserver" in window && !reducedMotion.matches) {
+    const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           entry.target.classList.add("visible");
+          observer.unobserve(entry.target);
         }
       });
-    },
-    {
-      threshold: 0.1,
-    }
-  );
+    }, { threshold: 0.1 });
+    animated.forEach((element) => observer.observe(element));
+  } else {
+    animated.forEach((element) => element.classList.add("visible"));
+  }
 
-  document.querySelectorAll(".animate-on-scroll").forEach((el) => {
-    observer.observe(el);
-  });
-
-  // Smooth scrolling for navigation links
-  document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
-    anchor.addEventListener("click", function (e) {
-      e.preventDefault();
-
-      const target = document.querySelector(this.getAttribute("href"));
-      if (target) {
-        window.scrollTo({
-          top: target.offsetTop - 70,
-          behavior: "smooth",
-        });
-
-        // Update active nav link
-        document.querySelectorAll(".nav-link").forEach((link) => {
-          link.classList.remove("active");
-        });
-        this.classList.add("active");
-      }
-    });
-  });
-  // ... existing code scrollTopBtn...
+  const navbar = document.querySelector(".navbar");
+  const navLinks = [...document.querySelectorAll(".nav-link")];
+  const sections = navLinks.map((link) => document.getElementById(link.hash.slice(1)));
   const scrollTopBtn = document.getElementById("scrollTopBtn");
-  window.addEventListener("scroll", function () {
-    if (window.scrollY > 200) {
-      scrollTopBtn.style.display = "block";
-    } else {
-      scrollTopBtn.style.display = "none";
-    }
-  });
-  scrollTopBtn.addEventListener("click", function () {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
-  // ... existing code ...
-  // Navbar scroll effect
-  window.addEventListener("scroll", function () {
-    const navbar = document.querySelector(".navbar");
-    if (window.scrollY > 50) {
-      navbar.style.padding = "10px 0";
-      navbar.style.boxShadow = "0 2px 20px rgba(0, 0, 0, 0.1)";
-    } else {
-      navbar.style.padding = "15px 0";
-      navbar.style.boxShadow = "0 2px 20px rgba(0, 0, 0, 0.05)";
-    }
-  });
-  // navbar close automatically when a nav-item is clicked in mobile view
-  document.querySelectorAll(".nav-item .nav-link").forEach(function (navLink) {
-    navLink.addEventListener("click", function () {
-      var navbarCollapse = document.querySelector(".navbar-collapse");
-      if (navbarCollapse.classList.contains("show")) {
-        // Bootstrap collapse
-        var bsCollapse = bootstrap.Collapse.getOrCreateInstance(navbarCollapse);
-        bsCollapse.hide();
-      }
+  function updateScrollState() {
+    navbar.classList.toggle("scrolled", window.scrollY > 50);
+    scrollTopBtn.style.display = window.scrollY > 200 ? "block" : "none";
+    let active = 0;
+    sections.forEach((section, index) => {
+      if (section && section.getBoundingClientRect().top <= navbar.offsetHeight + 80) active = index;
     });
-  });
-  // Auto update copyright year
-  document.getElementById("current-year").textContent =
-    new Date().getFullYear();
-
-  const defaultProjectImages = [
-    'image/nahid.jpg',
-    'image/nahid2.jpg',
-    'image/p1.png',
-    'image/p2.png',
-    'image/p3.png',
-  ];
-
-  const projectCardImages = [
-    ['image/p1.png', 'image/p2.png'],
-    ['image/p2.png', 'image/p3.png'],
-    ['image/p3.png', 'image/p4.png'],
-    ['image/p4.png', 'image/p5.png'],
-    ['image/p5.png', 'image/p6.png'],
-    ['image/p6.png', 'image/p7.png'],
-    ['image/p1.png', 'image/p4.png'],
-    ['image/p2.png', 'image/p5.png'],
-    ['image/nahid.jpg', 'image/nahid2.jpg'],
-  ];
-
-  document.querySelectorAll('.project-card').forEach((card, index) => {
-    if (!card.dataset.images) {
-      card.dataset.images = projectCardImages[index]
-        ? projectCardImages[index].join(',')
-        : defaultProjectImages.join(',');
-    }
-
-    const projectContent = card.querySelector('.project-content');
-    if (projectContent && !projectContent.querySelector('.project-footer')) {
-      const footer = document.createElement('div');
-      footer.className = 'project-footer';
-      footer.innerHTML =
-        '<button type="button" class="project-button">View Screenshots</button>';
-      projectContent.appendChild(footer);
-    }
-
-    card.addEventListener('click', () => {
-      const imageList = card.dataset.images
-        ? card.dataset.images.split(',').map((src) => src.trim())
-        : defaultProjectImages;
-      showProjectImages(imageList);
+    navLinks.forEach((link, index) => {
+      link.classList.toggle("active", index === active);
+      if (index === active) link.setAttribute("aria-current", "location");
+      else link.removeAttribute("aria-current");
     });
-  });
-});
-
-// ... existing code pop up project image slider...
-let currentSlide = 0;
-let sliderImages = [];
-function showProjectImages(images) {
-  sliderImages = images;
-  currentSlide = 0;
-  renderSliderImages();
-  const modal = document.getElementById("projectModal");
-  modal.style.display = "flex";
-  modal.classList.add("show");
-}
-function renderSliderImages() {
-  const modalImages = document.getElementById("modalImages");
-  const activeImage = sliderImages[currentSlide] || "";
-  modalImages.innerHTML = `
-    <div class="slider-container">
-      <button id="prevSlide" ${currentSlide === 0 ? "disabled" : ""} aria-label="Previous image">
-        <i class="fas fa-chevron-left"></i>
-      </button>
-      <img src="${activeImage}" alt="Project screenshot" class="slider-image" />
-      <button id="nextSlide" ${currentSlide === sliderImages.length - 1 ? "disabled" : ""} aria-label="Next image">
-        <i class="fas fa-chevron-right"></i>
-      </button>
-    </div>
-    <div class="thumbnail-row">
-      ${sliderImages
-        .map(
-          (src, index) =>
-            `<img src="${src}" alt="Thumbnail ${index + 1}" class="${
-              index === currentSlide ? "active" : ""
-            }" data-index="${index}" />`
-        )
-        .join("")}
-    </div>
-  `;
-
-  document.getElementById("prevSlide")?.addEventListener("click", function () {
-    if (currentSlide > 0) {
-      currentSlide--;
-      renderSliderImages();
-    }
-  });
-
-  document.getElementById("nextSlide")?.addEventListener("click", function () {
-    if (currentSlide < sliderImages.length - 1) {
-      currentSlide++;
-      renderSliderImages();
-    }
-  });
-
-  modalImages.querySelectorAll(".thumbnail-row img").forEach((thumb) => {
-    thumb.addEventListener("click", () => {
-      const index = Number(thumb.dataset.index);
-      if (!Number.isNaN(index)) {
-        currentSlide = index;
-        renderSliderImages();
-      }
-    });
-  });
-}
-document.getElementById("closeModal").onclick = function () {
-  document.getElementById("projectModal").style.display = "none";
-};
-
-const projectModal = document.getElementById("projectModal");
-projectModal?.addEventListener("click", (event) => {
-  if (event.target === projectModal) {
-    projectModal.style.display = "none";
   }
-});
-
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") {
-    projectModal?.style.display === "flex" && (projectModal.style.display = "none");
+  let scrollPending = false;
+  function scheduleScrollUpdate() {
+    if (scrollPending) return;
+    scrollPending = true;
+    requestAnimationFrame(() => {
+      updateScrollState();
+      scrollPending = false;
+    });
   }
+  window.addEventListener("scroll", scheduleScrollUpdate, { passive: true });
+  window.addEventListener("resize", scheduleScrollUpdate);
+  updateScrollState();
+  scrollTopBtn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: reducedMotion.matches ? "instant" : "smooth" });
+  });
+  navLinks.forEach((link) => link.addEventListener("click", () => {
+    const collapse = document.getElementById("navbarNav");
+    if (collapse.classList.contains("show") && window.bootstrap) {
+      bootstrap.Collapse.getOrCreateInstance(collapse).hide();
+    }
+  }));
+  document.getElementById("current-year").textContent = new Date().getFullYear();
+
+  const projectItems = [...document.querySelectorAll(".project-item")];
+  const filterButtons = document.querySelectorAll(".filter-button");
+  const projectCount = document.getElementById("projectCount");
+  document.querySelector('[data-filter="all"] span').textContent = projectItems.length;
+  projectCount.textContent = `${projectItems.length} projects`;
+  document.getElementById("projectToolbar").hidden = false;
+  filterButtons.forEach((button) => button.addEventListener("click", () => {
+    const filter = button.dataset.filter;
+    let count = 0;
+    projectItems.forEach((item) => {
+      const matches = filter === "all" || item.dataset.category.split(" ").includes(filter);
+      item.hidden = !matches;
+      if (matches) count++;
+    });
+    filterButtons.forEach((candidate) => {
+      const selected = candidate === button;
+      candidate.classList.toggle("active", selected);
+      candidate.setAttribute("aria-pressed", String(selected));
+    });
+    projectCount.textContent = `${count} ${count === 1 ? "project" : "projects"}`;
+  }));
+
+  // Bootstrap manages focus trapping, Escape, backdrop dismissal, and body scroll.
+  const modalElement = document.getElementById("projectModal");
+  const gallery = document.getElementById("modalImages");
+  const title = document.getElementById("projectModalTitle");
+  const status = document.getElementById("slideStatus");
+  let images = [];
+  let current = 0;
+  let projectName = "";
+  let trigger = null;
+  let mainImage;
+  let previous;
+  let next;
+
+  function updateSlide() {
+    mainImage.src = images[current];
+    mainImage.alt = `${projectName} screenshot ${current + 1} of ${images.length}`;
+    previous.disabled = current === 0;
+    next.disabled = current === images.length - 1;
+    gallery.querySelectorAll(".thumbnail-button").forEach((button, index) => {
+      button.classList.toggle("active", index === current);
+      button.setAttribute("aria-pressed", String(index === current));
+    });
+    status.textContent = `${current + 1} / ${images.length}`;
+  }
+  function changeSlide(offset) {
+    const target = current + offset;
+    if (target < 0 || target >= images.length) return;
+    const focused = document.activeElement;
+    current = target;
+    updateSlide();
+    if (focused === previous && previous.disabled) next.focus();
+    if (focused === next && next.disabled) previous.focus();
+  }
+  document.querySelectorAll(".project-card").forEach((card) => {
+    if (!card.dataset.images && card.querySelector(".project-footer")) return;
+    const sources = (card.dataset.images || "").split(",").map((src) => src.trim()).filter(Boolean);
+    const footer = document.createElement("div");
+    footer.className = "project-footer";
+    if (!sources.length) {
+      footer.classList.add("small", "text-muted");
+      footer.textContent = "Screenshots coming soon";
+    } else {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "project-button";
+      button.textContent = "View screenshots";
+      button.setAttribute("aria-label", `View ${card.querySelector("h3").textContent} screenshots`);
+      button.setAttribute("aria-haspopup", "dialog");
+      button.setAttribute("aria-controls", "projectModal");
+      button.addEventListener("click", () => {
+        if (!window.bootstrap) {
+          // Screenshots remain reachable if the Bootstrap CDN is unavailable.
+          window.location.assign(sources[0]);
+          return;
+        }
+        trigger = button;
+        images = sources;
+        current = 0;
+        projectName = card.querySelector("h3").textContent;
+        title.textContent = `${projectName} screenshots`;
+        gallery.replaceChildren();
+        const slider = document.createElement("div");
+        slider.className = "slider-container";
+        previous = document.createElement("button");
+        next = document.createElement("button");
+        previous.type = next.type = "button";
+        previous.textContent = "‹";
+        next.textContent = "›";
+        previous.setAttribute("aria-label", "Previous screenshot");
+        next.setAttribute("aria-label", "Next screenshot");
+        previous.addEventListener("click", () => changeSlide(-1));
+        next.addEventListener("click", () => changeSlide(1));
+        mainImage = document.createElement("img");
+        mainImage.className = "slider-image";
+        mainImage.addEventListener("error", () => {
+          status.textContent = "This screenshot could not load. Try another image.";
+        });
+        slider.append(previous, mainImage, next);
+        const thumbnails = document.createElement("div");
+        thumbnails.className = "thumbnail-row";
+        sources.forEach((src, index) => {
+          const thumbnail = document.createElement("button");
+          thumbnail.type = "button";
+          thumbnail.className = "thumbnail-button";
+          thumbnail.setAttribute("aria-label", `Show screenshot ${index + 1}`);
+          const image = document.createElement("img");
+          image.src = src;
+          image.alt = "";
+          image.loading = "lazy";
+          thumbnail.append(image);
+          thumbnail.addEventListener("click", () => { current = index; updateSlide(); });
+          thumbnails.append(thumbnail);
+        });
+        gallery.append(slider, thumbnails);
+        updateSlide();
+        bootstrap.Modal.getOrCreateInstance(modalElement).show();
+      });
+      footer.append(button);
+    }
+    card.querySelector(".project-content").append(footer);
+  });
+  modalElement.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      event.preventDefault();
+      changeSlide(event.key === "ArrowLeft" ? -1 : 1);
+    }
+  });
+  modalElement.addEventListener("hidden.bs.modal", () => trigger?.focus());
 });
-// ... existing code ...
