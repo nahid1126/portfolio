@@ -1,3 +1,26 @@
+// Screenshot filenames are generated from each project's folder, prefix, and count.
+// Preview numbers are one-based; omit them to use the first two screenshots.
+const projectGalleries = {
+  tma: { prefix: "tma", count: 8 },
+  smart_leaf: { count: 0 },
+  employee_attendance: { count: 0 },
+  cross_check: { count: 0 },
+  akg_astha: { count: 0 },
+  expense_tracker: { prefix: "et", count: 5 },
+  warehouse_transfer: { prefix: "wt", count: 5, preview: [2, 3] },
+  smart_cultivation: { count: 0 },
+  leaf_support: { count: 0 },
+  book_orbit: { prefix: "bo", count: 8, preview: [2, 6] },
+};
+
+function getProjectImages(projectId) {
+  const config = projectGalleries[projectId];
+  if (!config) return [];
+  return Array.from({ length: config.count }, (_, index) =>
+    `image/${projectId}/${config.prefix || ""}${index + 1}.${config.extension || "png"}`
+  );
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const animated = document.querySelectorAll(".animate-on-scroll");
@@ -111,8 +134,30 @@ document.addEventListener("DOMContentLoaded", () => {
     if (focused === next && next.disabled) previous.focus();
   }
   document.querySelectorAll(".project-card").forEach((card) => {
-    if (!card.dataset.images && card.querySelector(".project-footer")) return;
-    const sources = (card.dataset.images || "").split(",").map((src) => src.trim()).filter(Boolean);
+    const projectId = card.dataset.project;
+    const sources = getProjectImages(projectId);
+    const header = card.querySelector(".project-img");
+    if (sources.length && header) {
+      const preview = document.createElement("div");
+      preview.className = "project-preview";
+      preview.setAttribute("aria-hidden", "true");
+      const previewNumbers = projectGalleries[projectId].preview || [1, 2];
+      previewNumbers.forEach((number) => {
+        const src = sources[number - 1];
+        if (!src) return;
+        const image = document.createElement("img");
+        image.src = src;
+        image.alt = "";
+        image.loading = "lazy";
+        image.width = 100;
+        image.height = 200;
+        preview.append(image);
+      });
+      if (preview.childElementCount) {
+        header.querySelector("i")?.replaceWith(preview);
+        header.classList.add("has-screenshots");
+      }
+    }
     const footer = document.createElement("div");
     footer.className = "project-footer";
     if (!sources.length) {
