@@ -15,7 +15,18 @@ const projectGalleries = {
     preview: [2, 7],
   },
   warehouse_transfer: { prefix: "wt", count: 5, preview: [2, 3] },
-  smart_cultivation: { count: 0 },
+  smart_cultivation: {
+    filenames: ["11-officer-dashboard.png",
+      "03-crop-inputs.png",
+      "04-farmer-activity-information.png",
+      "05-seedbed-details.png",
+      "06-plantation-details.png",
+      "07-curing-barn-details.png",
+      "08-harvesting-details.png",
+      "10-curing-shed-details.png",
+    ],
+    demo: "SmartCultivation-FR-Demo.mp4",
+  },
   leaf_support: { count: 0 },
   book_orbit: { prefix: "bo", count: 8, preview: [2, 6] },
 };
@@ -117,6 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let current = 0;
   let projectName = "";
   let trigger = null;
+  let demoVideo;
   let mainImage;
   let previous;
   let next;
@@ -190,6 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
         current = 0;
         projectName = card.querySelector("h3").textContent;
         title.textContent = `${projectName} screenshots`;
+        status.hidden = false;
         gallery.replaceChildren();
         const slider = document.createElement("div");
         slider.className = "slider-container";
@@ -229,13 +242,50 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       footer.append(button);
     }
+    const demo = projectGalleries[projectId]?.demo;
+    if (demo) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "project-button ms-3";
+      button.textContent = "Watch demo";
+      button.setAttribute("aria-haspopup", "dialog");
+      button.setAttribute("aria-controls", "projectModal");
+      button.addEventListener("click", () => {
+        const src = `image/${projectId}/${demo}`;
+        if (!window.bootstrap) {
+          window.location.assign(src);
+          return;
+        }
+        trigger = button;
+        title.textContent = `${card.querySelector("h3").textContent} demo`;
+        status.hidden = true;
+        demoVideo = document.createElement("video");
+        demoVideo.className = "demo-video";
+        demoVideo.controls = true;
+        demoVideo.playsInline = true;
+        demoVideo.src = src;
+        demoVideo.setAttribute("aria-labelledby", title.id);
+        gallery.replaceChildren(demoVideo);
+        bootstrap.Modal.getOrCreateInstance(modalElement).show();
+        demoVideo.play().catch(() => {
+          // The native controls remain available if playback is blocked.
+        });
+      });
+      footer.append(button);
+    }
     card.querySelector(".project-content").append(footer);
   });
   modalElement.addEventListener("keydown", (event) => {
+    if (demoVideo) return;
     if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
       event.preventDefault();
       changeSlide(event.key === "ArrowLeft" ? -1 : 1);
     }
   });
-  modalElement.addEventListener("hidden.bs.modal", () => trigger?.focus());
+  modalElement.addEventListener("hide.bs.modal", () => demoVideo?.pause());
+  modalElement.addEventListener("hidden.bs.modal", () => {
+    demoVideo?.remove();
+    demoVideo = undefined;
+    trigger?.focus();
+  });
 });
