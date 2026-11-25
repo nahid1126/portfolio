@@ -6,7 +6,14 @@ const projectGalleries = {
   employee_attendance: { count: 0 },
   cross_check: { count: 0 },
   akg_astha: { count: 0 },
-  expense_tracker: { prefix: "et", count: 5 },
+  expense_tracker: {
+    filenames: [
+      "et1.png", "et2.png", "et3.png", "et4.png", "et5.png",
+      "et1.1.png", "et2.2.png", "et3.3.png", "et4.4.png", "et5.5.png",
+      "Screenshot_20261125_153532.png",
+    ],
+    preview: [2, 7],
+  },
   warehouse_transfer: { prefix: "wt", count: 5, preview: [2, 3] },
   smart_cultivation: { count: 0 },
   leaf_support: { count: 0 },
@@ -16,9 +23,10 @@ const projectGalleries = {
 function getProjectImages(projectId) {
   const config = projectGalleries[projectId];
   if (!config) return [];
-  return Array.from({ length: config.count }, (_, index) =>
-    `image/${projectId}/${config.prefix || ""}${index + 1}.${config.extension || "png"}`
+  const filenames = config.filenames || Array.from({ length: config.count }, (_, index) =>
+    `${config.prefix || ""}${index + 1}.${config.extension || "png"}`
   );
+  return filenames.map((filename) => `image/${projectId}/${filename}`);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
