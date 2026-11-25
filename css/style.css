@@ -186,7 +186,7 @@ section { padding: 104px 0; }
 .contact-value { display: block; font-size: .8rem; overflow-wrap: anywhere; }
 .contact-arrow { margin-left: auto; color: #9fbfb3; }
 a.contact-info-item:hover { color: var(--accent); }
-.contact-socials { display: flex; gap: 26px; padding: 22px 0; }
+.contact-socials { display: flex; flex-wrap: wrap; gap: 12px 26px; padding: 22px 0; }
 .contact-socials a { text-decoration: none; color: #c4dbd1; font-size: .7rem; font-weight: 700; }
 .contact-socials a span { margin-left: 10px; }
 .contact-socials a:hover { color: white; }
