@@ -27,7 +27,7 @@ const projectGalleries = {
     ],
     demo: "SmartCultivation-FR-Demo.mp4",
   },
-  leaf_support: { count: 0 },
+  leaf_support: { prefix: "ls", count: 6, preview: [1, 6] },
   book_orbit: { prefix: "bo", count: 8, preview: [2, 6] },
 };
 
